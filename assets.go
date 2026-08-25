@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	"path/filepath"
 )
 
 func (cfg apiConfig) ensureAssetsDir() error {
@@ -9,4 +10,9 @@ func (cfg apiConfig) ensureAssetsDir() error {
 		return os.Mkdir(cfg.assetsRoot, 0755)
 	}
 	return nil
+}
+
+func (cfg apiConfig) uploadAsset(fileName string, imageData []byte) error {
+	assetPath := filepath.Join(cfg.assetsRoot, fileName)
+	return os.WriteFile(assetPath, imageData, 0644)
 }
