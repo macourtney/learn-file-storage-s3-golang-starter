@@ -113,10 +113,24 @@ func (cfg *apiConfig) handlerUploadVideo(w http.ResponseWriter, r *http.Request)
 	aspectRatioType := getAspectRatioType(aspectRatio)
 	videoKey := fmt.Sprintf("%s/%s.mp4", aspectRatioType, randomStr)
 
+	videoPath, err := processVideoForFastStart(tmpFile.Name())
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Couldn't process video for fast start", err)
+		return
+	}
+	defer os.Remove(videoPath)
+
+	videoFile, err := os.Open(videoPath)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Couldn't open video file", err)
+		return
+	}
+	defer videoFile.Close()
+
 	_, err = cfg.s3Client.PutObject(context.Background(), &s3.PutObjectInput{
 		Bucket:      aws.String(cfg.s3Bucket),
 		Key:         aws.String(videoKey),
-		Body:        tmpFile,
+		Body:        videoFile,
 		ContentType: aws.String("video/mp4"),
 	})
 	if err != nil {
